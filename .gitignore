@@ -10,3 +10,4 @@ data/raw/
 data/train.jsonl
 data/val.jsonl
 data/test.jsonl
+outputs/
