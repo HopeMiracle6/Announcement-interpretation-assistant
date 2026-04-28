@@ -1,0 +1,12 @@
+.venv/
+.vscode/
+__pycache__/
+*.pyc
+.env
+.DS_Store
+saves/
+models/
+data/raw/
+data/train.jsonl
+data/val.jsonl
+data/test.jsonl
