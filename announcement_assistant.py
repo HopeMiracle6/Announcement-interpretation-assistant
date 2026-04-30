@@ -35,7 +35,7 @@ def extract_entities(text: str) -> str:
 
 
 def extract_amounts_and_dates(text: str) -> str:
-    amount_pattern = r"\d+(?:\.\d+)?\s*(?:亿元|万元|元|%|股|万股|亿股)"
+    amount_pattern = r"(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?\s*(?:亿元|万元|万股|亿股|元|股|%)"
     date_pattern = r"\d{4}\s*年\s*\d{1,2}\s*月\s*\d{1,2}\s*日|\d{4}\s*年度|\d{4}\s*年"
     amounts = re.findall(amount_pattern, text)
     dates = re.findall(date_pattern, text)
