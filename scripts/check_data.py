@@ -1,8 +1,14 @@
 import json
+import sys
 from pathlib import Path
 
 
 FORBIDDEN_WORDS = ["买入", "卖出", "持有", "稳赚", "必涨", "推荐股票"]
+DEFAULT_FILES = [
+    Path("data/train.jsonl"),
+    Path("data/valid.jsonl"),
+    Path("data/test.jsonl"),
+]
 
 
 def check_file(path: Path) -> list[tuple[int, str]]:
@@ -30,7 +36,11 @@ def check_file(path: Path) -> list[tuple[int, str]]:
 
 
 def main() -> None:
-    files = [Path("data/demo.jsonl")]
+    files = [Path(arg) for arg in sys.argv[1:]]
+    if not files:
+        existing_default_files = [path for path in DEFAULT_FILES if path.exists()]
+        files = existing_default_files or [Path("data/demo.jsonl")]
+
     for path in files:
         bad = check_file(path)
         print(f"{path} bad: {len(bad)}")
