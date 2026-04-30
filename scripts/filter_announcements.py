@@ -13,7 +13,7 @@ def load_jsonl(path: Path) -> list[dict]:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input", default="data/raw/cninfo_announcements.jsonl")
+    parser.add_argument("--input", nargs="+", default=["data/raw/cninfo_announcements.jsonl"])
     parser.add_argument("--output", default="data/raw/filtered_announcements.jsonl")
     parser.add_argument("--per-class", type=int, default=60)
     parser.add_argument("--target-total", type=int, default=500)
@@ -22,20 +22,25 @@ def main() -> None:
     grouped = defaultdict(list)
     seen_urls = set()
 
-    for item in load_jsonl(Path(args.input)):
-        title = item.get("title", "")
-        category, label = match_category(title)
-        if not category:
-            continue
+    for input_path in args.input:
+        for item in load_jsonl(Path(input_path)):
+            title = item.get("title", "")
+            category = item.get("event_category")
+            label = item.get("event_type")
+            if not category or not label:
+                category, label = match_category(title)
 
-        pdf_url = item.get("pdf_url")
-        if not pdf_url or pdf_url in seen_urls:
-            continue
+            if not category:
+                continue
 
-        seen_urls.add(pdf_url)
-        item["event_category"] = category
-        item["event_type"] = label
-        grouped[category].append(item)
+            pdf_url = item.get("pdf_url")
+            if not pdf_url or pdf_url in seen_urls:
+                continue
+
+            seen_urls.add(pdf_url)
+            item["event_category"] = category
+            item["event_type"] = label
+            grouped[category].append(item)
 
     selected = []
     for category in sorted(grouped):
