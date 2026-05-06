@@ -11,6 +11,27 @@ FIELDS = [
 ]
 
 FORBIDDEN_WORDS = ["买入", "卖出", "持有", "稳赚", "必涨", "推荐股票"]
+ADVICE_KEYWORDS = [
+    "能买吗",
+    "能不能买",
+    "可以买",
+    "该不该买",
+    "要不要买",
+    "值得买吗",
+    "会涨吗",
+    "能涨吗",
+    "目标价",
+    "投资建议",
+    "股票",
+    "股价",
+    "涨跌",
+    "推荐",
+    "买入",
+    "卖出",
+    "持有",
+    "抄底",
+    "逃顶",
+]
 
 
 def detect_event_type(text: str) -> str:
@@ -43,6 +64,19 @@ def extract_amounts_and_dates(text: str) -> str:
     return "、".join(items[:10]) if items else "当前材料未明确提供"
 
 
+def is_investment_advice_request(question: str) -> bool:
+    compact = question.replace(" ", "")
+    return any(keyword in compact for keyword in ADVICE_KEYWORDS)
+
+
+def refuse_investment_advice() -> str:
+    return (
+        "我不能根据单段公告材料给出买入、卖出、持有、目标价或股价涨跌判断。"
+        "可以做的是：基于公告原文提取事件类型、涉及主体、关键金额/时间、可能影响和风险点。"
+        "以下内容仅为公告解读，不构成投资建议。"
+    )
+
+
 def explain_announcement(text: str) -> dict[str, str]:
     return {
         "事件类型": detect_event_type(text),
@@ -52,6 +86,30 @@ def explain_announcement(text: str) -> dict[str, str]:
         "风险提示": "当前解读仅基于用户提供的片段，不构成投资建议；公告信息可能存在不完整、未审计或后续变化的情况。",
         "不能判断的部分": "无法仅凭当前材料判断公司估值、股价走势、投资价值，或公告未披露的事实。",
     }
+
+
+def base_model_answer(text: str, question: str) -> str:
+    event_type = detect_event_type(text)
+    facts = extract_amounts_and_dates(text)
+    subject = extract_entities(text)
+
+    if is_investment_advice_request(question):
+        return (
+            f"从公告看，{subject}涉及{event_type}，关键数据包括{facts}。"
+            "该事项可能会影响市场情绪，后续可以重点关注公司进展。"
+        )
+
+    return (
+        f"这段材料主要涉及{event_type}。涉及主体包括{subject}。"
+        f"文中出现的关键金额或时间有{facts}。"
+        "整体看，该事项可能影响公司经营或市场预期，但还需要结合完整公告继续判断。"
+    )
+
+
+def qlora_demo_answer(text: str, question: str) -> dict[str, str] | str:
+    if is_investment_advice_request(question):
+        return refuse_investment_advice()
+    return explain_announcement(text)
 
 
 def result_to_text(result: dict[str, str]) -> str:
