@@ -9,20 +9,28 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from scripts.convert_to_llamafactory import convert_file
 
 
-DATASET_INFO = {
-    "file_name": "finance_sft.json",
-    "formatting": "sharegpt",
-    "columns": {
-        "messages": "conversations",
-        "system": "system",
-    },
-    "tags": {
-        "role_tag": "from",
-        "content_tag": "value",
-        "user_tag": "human",
-        "assistant_tag": "gpt",
-    },
+DATASETS = {
+    "finance_sft": ("train.jsonl", "finance_sft_train.json"),
+    "finance_sft_valid": ("valid.jsonl", "finance_sft_valid.json"),
+    "finance_sft_test": ("test.jsonl", "finance_sft_test.json"),
 }
+
+
+def build_dataset_info(file_name: str) -> dict:
+    return {
+        "file_name": file_name,
+        "formatting": "sharegpt",
+        "columns": {
+            "messages": "conversations",
+            "system": "system",
+        },
+        "tags": {
+            "role_tag": "from",
+            "content_tag": "value",
+            "user_tag": "human",
+            "assistant_tag": "gpt",
+        },
+    }
 
 
 def load_dataset_info(path: Path) -> dict:
@@ -54,11 +62,18 @@ def prepare(llamafactory_dir: Path) -> None:
         raise FileNotFoundError(f"未找到 dataset_info.json：{dataset_info_path}")
 
     project_root = Path(__file__).resolve().parents[1]
-    source_jsonl = project_root / "data" / "demo.jsonl"
-    local_sharegpt = project_root / "data" / "finance_sft_demo.json"
+    dataset_info = load_dataset_info(dataset_info_path)
 
-    convert_file(source_jsonl, local_sharegpt)
-    copy_file(local_sharegpt, llamafactory_dir / "data" / "finance_sft.json")
+    for dataset_name, (source_file, output_file) in DATASETS.items():
+        source_jsonl = project_root / "data" / source_file
+        local_sharegpt = project_root / "data" / output_file
+        llamafactory_json = llamafactory_dir / "data" / output_file
+
+        convert_file(source_jsonl, local_sharegpt)
+        copy_file(local_sharegpt, llamafactory_json)
+        dataset_info[dataset_name] = build_dataset_info(output_file)
+        print(f"registered dataset: {dataset_name}")
+
     copy_file(
         project_root / "configs" / "qwen3_4b_finance_qlora.yaml",
         llamafactory_dir / "examples" / "train_lora" / "qwen3_4b_finance_qlora.yaml",
@@ -68,10 +83,7 @@ def prepare(llamafactory_dir: Path) -> None:
         llamafactory_dir / "examples" / "inference" / "qwen3_4b_finance_lora_infer.yaml",
     )
 
-    dataset_info = load_dataset_info(dataset_info_path)
-    dataset_info["finance_sft"] = DATASET_INFO
     save_dataset_info(dataset_info_path, dataset_info)
-    print("registered dataset: finance_sft")
     print("train: llamafactory-cli train examples/train_lora/qwen3_4b_finance_qlora.yaml")
     print("chat:  llamafactory-cli chat examples/inference/qwen3_4b_finance_lora_infer.yaml")
 

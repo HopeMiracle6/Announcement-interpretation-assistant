@@ -11,4 +11,5 @@ data/train.jsonl
 data/valid.jsonl
 data/val.jsonl
 data/test.jsonl
+data/finance_sft_*.json
 outputs/

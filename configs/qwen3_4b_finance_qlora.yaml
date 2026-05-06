@@ -14,14 +14,14 @@ quantization_bit: 4
 
 ### dataset
 dataset: finance_sft
+eval_dataset: finance_sft_valid
 template: qwen3_nothink
-cutoff_len: 1024
-max_samples: 100
+cutoff_len: 1536
 overwrite_cache: true
 preprocessing_num_workers: 4
 
 ### output
-output_dir: saves/qwen3-4b/lora/finance_sft
+output_dir: saves/qwen3-4b/lora/finance_sft_json
 logging_steps: 10
 save_steps: 50
 plot_loss: true
@@ -38,7 +38,6 @@ bf16: true
 gradient_checkpointing: true
 
 ### eval
-val_size: 0.1
 per_device_eval_batch_size: 1
 eval_strategy: steps
 eval_steps: 50
